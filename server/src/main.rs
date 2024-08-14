@@ -25,5 +25,7 @@ fn main() {
 fn parse_request(req_str: String) -> Result<(), String> {
     let mut lines = req_str.split('\n');
     let mut first_line = lines.next().unwrap().split(" ");
+
+    // assert that the first line of the HTTP request is the expected triple
     assert!(first_line.clone().count() == 3);
 }
