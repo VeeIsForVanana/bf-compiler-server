@@ -1,5 +1,36 @@
 use std::{fs::File, io::Read, net::TcpListener};
 
+mod Request {
+
+    // track the request method
+    pub enum Method {
+        POST,
+        GET,
+    }
+
+    // track if the accept is valid for this request
+    pub enum Accept {
+        TextHtml,
+        TextFile,
+    }
+
+    pub enum ContentType {
+        Brainfuck,
+        Invalid,
+    }
+
+    pub enum UserAgent {
+        Browser,
+        Terminal,
+    }
+
+    pub struct Request {
+        method: Method,
+        accept: Accept,
+        body: String,
+    }
+}
+
 fn main() {
     if let Err(_) = File::open("exercise_2") {
         panic!(
