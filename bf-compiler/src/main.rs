@@ -1,5 +1,5 @@
 use bf_compiler::*;
-use std::env;
+use std::{env, io::BufWriter};
 
 fn main() {
     let arguments: Vec<String> = env::args().collect();
@@ -21,9 +21,16 @@ pub mod bf_compiler {
     use regex::Regex;
     use std::{
         fs::File,
-        io::{BufWriter, Read, Write},
+        io::{BufReader, BufWriter, Read, Write},
         str::Chars,
     };
+
+    // perform all compilation steps given a buffer containing the bf code and a destination buffer
+    pub fn compile<T>(src: BufReader<T>, dst: BufWriter<T>)
+    where
+        T: Write,
+    {
+    }
 
     // find the brainfuck file and emit its contents
     pub fn read(file_path: &String) -> String {
