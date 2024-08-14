@@ -18,13 +18,12 @@ fn main() {
 }
 
 pub mod bf_compiler {
-    pub use std::{
+    use regex::Regex;
+    use std::{
         fs::File,
         io::{BufWriter, Read, Write},
         str::Chars,
     };
-
-    use regex::Regex;
 
     // find the brainfuck file and emit its contents
     pub fn read(file_path: &String) -> String {
