@@ -1,55 +1,64 @@
 use bf_compiler::*;
-use std::{env, io::BufWriter};
+use regex::Regex;
+use std::{
+    env,
+    fs::File,
+    io::{BufReader, BufWriter},
+};
+
+// find the brainfuck file and emit its contents
+fn read(file_path: &String) -> File {
+    return File::open(file_path).unwrap();
+}
+
+fn create_file(file_path: &String) -> File {
+    let extension_matcher = Regex::new(r"\.bf$").unwrap();
+    let new_filename = extension_matcher.replace(file_path, ".asm");
+    File::create(new_filename.into_owned()).unwrap()
+}
 
 fn main() {
     let arguments: Vec<String> = env::args().collect();
     match arguments.len() {
         2 => {
             let file_path = &arguments[1];
-            let code = read(file_path);
-            if !is_valid(&code) {
-                panic!("SYNTAX ERROR")
-            }
+            let src = read(file_path);
             let dest = create_file(file_path);
-            parse(BufWriter::new(dest), &code)
+            compile(BufReader::new(src), BufWriter::new(dest)).unwrap();
         }
         _ => panic!("Not enough arguments!"),
     }
 }
 
 pub mod bf_compiler {
-    use regex::Regex;
     use std::{
-        fs::File,
         io::{BufReader, BufWriter, Read, Write},
         str::Chars,
     };
 
     // perform all compilation steps given a buffer containing the bf code and a destination buffer
-    pub fn compile<T>(src: BufReader<T>, dst: BufWriter<T>)
+    pub fn compile<A, B>(mut src: BufReader<A>, dst: BufWriter<B>) -> Result<(), String>
     where
-        T: Write,
+        A: Read,
+        B: Write,
     {
-    }
+        let mut src_string = String::new();
+        if let Err(_) = BufReader::read_to_string(&mut src, &mut src_string) {
+            return Err(String::from(
+                "An I/O error kept the .bf file from being read",
+            ));
+        }
+        if !is_valid(&src_string) {
+            return Err(String::from("Brainfuck code is invalid"));
+        }
 
-    // find the brainfuck file and emit its contents
-    pub fn read(file_path: &String) -> String {
-        let mut bf_code = String::new();
-        File::open(file_path)
-            .unwrap()
-            .read_to_string(&mut bf_code)
-            .unwrap();
-        bf_code
-    }
+        parse(dst, &src_string);
 
-    pub fn create_file(file_path: &String) -> File {
-        let extension_matcher = Regex::new(r"\.bf$").unwrap();
-        let new_filename = extension_matcher.replace(file_path, ".asm");
-        File::create(new_filename.into_owned()).unwrap()
+        return Ok(());
     }
 
     // check if the code string is valid brainfuck
-    pub fn is_valid(code: &String) -> bool {
+    fn is_valid(code: &String) -> bool {
         let mut counter = 0;
         for cmd in code.chars() {
             match cmd {
@@ -72,7 +81,7 @@ pub mod bf_compiler {
     }
 
     // go through the brainfuck file and emit the appropriate MIPS assembly to a text file
-    pub fn parse(mut dest_buff: BufWriter<File>, src_code: &String) {
+    fn parse(mut dest_buff: BufWriter<impl Write>, src_code: &String) {
         let mut src_iter = src_code.chars();
         translate_loop(&mut dest_buff, &mut src_iter, LoopLocator::new());
     }
@@ -93,8 +102,8 @@ pub mod bf_compiler {
     // provide the appropriate translations for a loop,
     // use a provided counter to determine labels for this loop and all others inside,
     // return the incremented counter to be used by the next loops
-    pub fn translate_loop(
-        mut dest_buff: &mut BufWriter<File>,
+    fn translate_loop(
+        mut dest_buff: &mut BufWriter<impl Write>,
         src_iter: &mut Chars,
         mut locator: LoopLocator,
     ) -> LoopLocator {
