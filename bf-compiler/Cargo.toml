@@ -1,5 +1,5 @@
 [package]
-name = "exercise_2"
+name = "bf-compiler"
 version = "0.1.0"
 edition = "2021"
 
